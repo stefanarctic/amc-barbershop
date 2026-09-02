@@ -129,7 +129,7 @@ function renderServices() {
         <span class="service-price">${s.price}</span>
       </div>
       <span class="service-meta">⏱ ${s.duration}</span>
-      <a href="${MERO_URL}" target="_blank" rel="noopener" class="btn btn-outline">Programează →</a>
+      <a href="#programare" class="btn btn-outline">Programează →</a>
     </article>`
   );
   // cardul de redirectionare către Specialiști
@@ -154,7 +154,7 @@ function renderTeam() {
       <h3>${escapeHtml(t.name)}</h3>
       <p class="team-role">${t.role}</p>
       <p class="team-score"><span class="stars">${stars(5)}</span> ${t.rating} <span class="muted">(${t.reviews} evaluări)</span></p>
-      <a href="${MERO_URL}" target="_blank" rel="noopener" class="btn btn-gold">Alege</a>
+      <a href="#programare" class="btn btn-gold">Alege</a>
     </article>`
   ).join("");
 }
@@ -304,7 +304,7 @@ function ensureServicePopup() {
       <h3 class="service-popup-name"></h3>
       <p class="service-popup-meta"></p>
       <p class="service-popup-desc"></p>
-      <a href="${MERO_URL}" target="_blank" rel="noopener" class="btn btn-gold">Programează pe Mero →</a>`;
+      <a href="#programare" class="btn btn-gold">Programează-te →</a>`;
     document.body.appendChild(popup);
     popup.querySelector(".service-popup-close").addEventListener("click", () => closeServicePopup());
   }
@@ -326,6 +326,11 @@ function closeServicePopup() {
 }
 
 document.addEventListener("click", (e) => {
+  if (e.target.closest('a[href="#programare"], a[href="index.html#programare"]')) {
+    warmMeroFrame();
+    closeServicePopup();
+    return;
+  }
   if (e.target.closest("#servicePopup")) return;
   const card = e.target.closest(".service-card[data-service-index]");
   if (card && !e.target.closest("a")) {
@@ -334,6 +339,27 @@ document.addEventListener("click", (e) => {
   }
   closeServicePopup();
 });
+
+// ---------- Embed Mero ----------
+function warmMeroFrame() {
+  const frame = $("#meroFrame");
+  if (!frame || frame.dataset.warmed === "1") return;
+  frame.dataset.warmed = "1";
+  frame.loading = "eager";
+  frame.src = frame.getAttribute("src") || MERO_URL;
+}
+
+function initMeroEmbed() {
+  const frame = $("#meroFrame");
+  const placeholder = $("#meroPlaceholder");
+  if (!frame) return;
+
+  const hidePlaceholder = () => placeholder?.classList.add("hidden");
+  frame.addEventListener("load", hidePlaceholder);
+  setTimeout(hidePlaceholder, 8000);
+
+  if (location.hash === "#programare") warmMeroFrame();
+}
 
 // ---------- Harta (consimțământ „two-click”) ----------
 // Iframe-ul Google Maps NU se încarcă la deschiderea paginii — doar la apăsarea butonului,
@@ -389,5 +415,6 @@ if ($("#teamGrid")) renderTeam();
 if ($("#reviewsGrid")) renderReviews();
 if ($("#scheduleList")) renderSchedule();
 if ($("#galleryGrid")) renderGallery();
+initMeroEmbed();
 observeReveals();
 if ($("#scheduleList")) setInterval(renderSchedule, 60 * 1000);

@@ -35,7 +35,7 @@
         <a href="#program">Program</a>
         <a href="#locatie">Locație</a>
         <a href="politica-confidentialitate.html">Confidențialitate</a>
-        <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener" class="btn btn-gold nav-cta">Programează-te</a>
+        <a href="#programare" class="btn btn-gold nav-cta">Programează-te</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Meniu">
         <span></span><span></span><span></span>
@@ -56,7 +56,7 @@
         <h1 class="reveal">Frizeria <span class="gold">„AMC”</span></h1>
         <p class="hero-sub reveal">AMC nu stii unde sa te tunzi. Vino la AMC!</p>
         <div class="hero-actions reveal">
-          <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener" class="btn btn-gold btn-lg">Programează-te acum</a>
+          <a href="#programare" class="btn btn-gold btn-lg">Programează-te acum</a>
           <a href="#servicii" class="btn btn-outline btn-lg">Vezi servicii &amp; prețuri</a>
         </div>
         <div class="hero-meta reveal">
@@ -127,24 +127,35 @@
     </div>
   </section>
 
-  <!-- ===== PROGRAMARE (Mero) ===== -->
+  <!-- ===== PROGRAMARE (Mero embed) ===== -->
   <section class="section section-booking" id="programare">
     <div class="container">
       <p class="section-kicker reveal">Rezervă-ți locul</p>
-      <h2 class="section-title reveal">Programează-te pe <span class="gold">Mero</span></h2>
-      <p class="section-sub reveal">Alege serviciul, specialistul și ora — confirmarea e instant, 24/7.</p>
+      <h2 class="section-title reveal">Programează-te <span class="gold">acum</span></h2>
+      <p class="section-sub reveal">Alege serviciul, specialistul și ora — rămâi pe pagină, confirmarea e instant.</p>
 
-      <div class="mero-cta reveal">
-        <p class="mero-cta-rating">
-          <span class="stars">★★★★★</span>
-          <strong>4.99</strong>
-          <span class="muted">(1379 evaluări)</span>
-        </p>
-        <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener" class="btn btn-gold btn-lg">Programează-te pe Mero →</a>
-        <p class="privacy-note">Programările se fac pe platforma
-          <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener">Mero</a>.
-          Vezi și <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.</p>
+      <div class="mero-embed" id="meroEmbed">
+        <div class="mero-placeholder" id="meroPlaceholder">
+          <div class="mero-spinner" aria-hidden="true"></div>
+          <p>Se încarcă programările…</p>
+        </div>
+        <iframe
+          id="meroFrame"
+          title="Programare online Mero — Frizeria AMC"
+          src="https://mero.ro/p/am-barber"
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allow="payment; fullscreen"
+          allowfullscreen
+        ></iframe>
       </div>
+      <p class="privacy-note mero-embed-note">
+        Programările rulează pe
+        <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener">Mero</a>.
+        Dacă widget-ul nu apare,
+        <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener">deschide Mero într-un tab nou</a>.
+        Vezi și <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.
+      </p>
     </div>
   </section>
 

@@ -23,7 +23,7 @@ python -m http.server 8000   # then open http://localhost:8000/
 
 Key behaviors wired across both files:
 
-- **Booking flow**: there is no on-site form. All „Programează” / „Alege” CTAs open the Mero profile (`https://mero.ro/p/am-barber`) in a new tab. The `#programare` section is a Mero CTA card.
+- **Booking flow**: Mero is embedded as an iframe in `#programare` (`https://mero.ro/p/am-barber`). All „Programează” / „Alege” CTAs scroll to that section. A fallback link opens Mero in a new tab if the iframe does not display.
 - **Reviews**: user-submitted reviews are stored locally in `localStorage` (`lm_reviews`), shown only at 4+ stars, and only their author's browser sees them (there is no backend). `MERO_REVIEWS` is for real reviews copied from Mero — the code comments stress that fake reviews are illegal; it displays 6 per day in daily rotation and shows nothing while the array is empty.
 - **Gallery**: drop photos named `client-1.jpg`, `client-2.jpg`, … (jpg/jpeg/png/webp) into `assets/galerie/`. JS probes up to 12 slots and silently hides missing files — no HTML change needed to add photos.
 - **Privacy**: the Google Maps iframe loads only after an explicit "Încarcă harta" click (two-click consent, GDPR-driven design choice — keep it).
