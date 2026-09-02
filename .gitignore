@@ -1,11 +1,8 @@
-# Date runtime (programări, sesiuni, loguri) — nu se versionază
-server-php/data/*.db
-server-php/data/*.db-wal
-server-php/data/*.db-shm
-server-php/data/*.log
-server-php/data/sessions/*
-!server-php/data/sessions/.gitkeep
-
-# Setări locale editor
-.claude/
+node_modules/
+dist/
+.env
+.env.local
 *.log
+.claude/
+.firebase/
+_firestore-model.md

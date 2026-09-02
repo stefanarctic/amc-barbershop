@@ -1,13 +1,26 @@
 {
-  "name": "frizeria-amc",
-  "version": "1.0.0",
+  "name": "la-macrea",
   "private": true,
-  "description": "Site + sistem de programări pentru Frizeria „AMC” (Sibiu) — backend PHP fără dependențe",
-  "main": "start.mjs",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Site + programări pentru Frizeria „La Macrea” (Sibiu) — React, Vite, Firebase",
   "scripts": {
-    "start": "node start.mjs"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && npx -y firebase-tools@latest deploy"
+  },
+  "dependencies": {
+    "firebase": "^12.18.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.2.2"
   }
 }
