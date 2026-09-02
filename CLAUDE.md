@@ -4,32 +4,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Static website for Frizeria „AMC" (barber shop in Sibiu, Romania) — plain HTML/CSS/JS, no build step, no package manager, no dependencies. All content is in Romanian (`lang="ro"`); keep user-facing text in Romanian.
+Website + sistem de programări pentru Frizeria „La Macrea” (Sibiu) — site static în `la-macrea/` și backend PHP fără dependențe în `server-php/`. Tot textul către utilizator e în română (`lang="ro"`).
 
 ## Running
 
-No build/lint/test tooling. To preview, serve the project root (the site uses no fetch calls, so opening `index.html` directly also works):
+```
+node start.mjs
+# sau: npm start
+# http://localhost:8462
+```
+
+Pe Linux/macOS: `./server-php/bin/start.sh`.
+
+Parolă admin (o dată, persistă în SQLite):
 
 ```
-python -m http.server 8000   # then open http://localhost:8000/
+# Windows (PowerShell):
+$env:PROJECT_DIR = (Get-Location).Path; $env:DATA_DIR = "$env:PROJECT_DIR\server-php\data"
+php -c server-php/php.ini server-php/bin/setpass.php "PAROLA_TA"
+
+# Linux / macOS:
+export PROJECT_DIR="$(pwd)" DATA_DIR="$(pwd)/server-php/data"
+php -c server-php/php.ini server-php/bin/setpass.php "PAROLA_TA"
 ```
+
+Dashboard: `http://localhost:8462/admin`. Publicare: vezi `DEPLOY.md`.
 
 ## Architecture
 
-- `index.html` — single-page site. Sections are static HTML; grids for services, team, reviews, and gallery are empty `<div>`s populated by JS.
-- `js/script.js` — all logic and **all site data**. The arrays at the top (`SERVICES`, `TEAM`, `REVIEWS`, `EXTRA_REVIEWS`, `MERO_REVIEWS`, `SCHEDULE`) are the content source of truth: prices, barbers, hours. `MERO_URL` is the booking link. Edit these to change content — not the HTML.
-- `css/style.css` — single stylesheet, dark/gold theme, mobile-first with hamburger nav.
-- `politica-confidentialitate.html` — standalone privacy policy page.
+- `la-macrea/` — site-ul public (HTML/CSS/JS). Docroot-ul serverului PHP.
+- `la-macrea/js/script.js` — logica publică și **sursa de adevăr pentru conținut**: `SERVICES`, `TEAM`, `REVIEWS`, `EXTRA_REVIEWS`, `MERO_REVIEWS`, `SCHEDULE`, `OPENING`. Modifică aici prețuri, frizeri, program — nu în HTML. `SCHEDULE` și duratele serviciilor trebuie ținute sincron cu `server-php/app/init.php`.
+- `la-macrea/css/style.css` — tema dark/gold, mobile-first.
+- `la-macrea/js/admin.js` + `la-macrea/css/admin.css` — dashboard-ul de la `/admin` (login-ul e server-side).
+- `server-php/` — API (`/api/*`), admin (`/admin`), SQLite în `server-php/data/amc.db`.
+- `start.mjs` — pornește `php -S` pe `127.0.0.1:8462` cu `php.ini` întărit.
 
-Key behaviors wired across both files:
+Comportamente importante:
 
-- **Booking flow**: Mero is embedded as an iframe in `#programare` (`https://mero.ro/p/am-barber`). All „Programează” / „Alege” CTAs scroll to that section. A fallback link opens Mero in a new tab if the iframe does not display.
-- **Reviews**: user-submitted reviews are stored locally in `localStorage` (`lm_reviews`), shown only at 4+ stars, and only their author's browser sees them (there is no backend). `MERO_REVIEWS` is for real reviews copied from Mero — the code comments stress that fake reviews are illegal; it displays 6 per day in daily rotation and shows nothing while the array is empty.
-- **Gallery**: drop photos named `client-1.jpg`, `client-2.jpg`, … (jpg/jpeg/png/webp) into `assets/galerie/`. JS probes up to 12 slots and silently hides missing files — no HTML change needed to add photos.
-- **Privacy**: the Google Maps iframe loads only after an explicit "Încarcă harta" click (two-click consent, GDPR-driven design choice — keep it).
-- **XSS**: all user-supplied text interpolated into `innerHTML` must go through `escapeHtml()` (see its comment in script.js).
-
-## Known gaps / TODO in code
-
-- Footer legal IDs (CUI, ONRC, phone, email) are placeholders marked `<!-- COMPLETEAZĂ -->`.
-- `hero-sub` text contains a typo ("AMC nu stii unde sa te tunzi") and the hero H1 says "AMC" while title/branding elsewhere says "La Macrea".
+- **Programări**: formularul trimite la `/api/bookings`. Sloturile vin din `/api/availability`. Telefon: `/^0[0-9]{9}$/`.
+- **Recenzii**: recenziile trimise de vizitatori stau în `localStorage` (`lm_reviews`), doar 4+ stele, doar în browserul autorului. `MERO_REVIEWS` e pentru recenzii reale de pe Mero — recenziile false sunt ilegale; se afișează 6 pe zi în rotație, nimic dacă array-ul e gol.
+- **Galerie**: poze `client-1.jpg` … în `la-macrea/assets/galerie/` (jpg/jpeg/png/webp). JS sondează până la 12 sloturi și ascunde fișierele lipsă.
+- **Confidențialitate**: iframe-ul Google Maps se încarcă doar după click pe „Încarcă harta” (consimțământ GDPR — păstrează-l).
+- **XSS**: orice text de la utilizator interpolat în `innerHTML` trece prin `escapeHtml()`.

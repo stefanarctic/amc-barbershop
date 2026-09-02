@@ -1,0 +1,13 @@
+{
+  "name": "frizeria-amc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site + sistem de programări pentru Frizeria „AMC” (Sibiu) — backend PHP fără dependențe",
+  "main": "start.mjs",
+  "scripts": {
+    "start": "node start.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
