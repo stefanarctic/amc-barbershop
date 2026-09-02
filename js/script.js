@@ -85,34 +85,7 @@ const SCHEDULE = [
   { day: "Duminică", hours: "Închis",        closed: true,  jsDay: 0 },
 ];
 
-const OPENING = { weekday: { open: 10 * 60, close: 20 * 60 }, saturday: { open: 10 * 60 + 30, close: 16 * 60 } };
-
-// Numerele de WhatsApp ale frizerilor (format internațional, fără +)
-const BARBER_WHATSAPP = {
-  "Alex Macrea": "40753985205",
-  "Alexandru (Atomic) Văduva": "40771606823",
-};
-
-// Mesajul de programare trimis pe WhatsApp, construit din ce a ales clientul
-function buildWhatsAppMessage(b) {
-  return (
-    `💈 *Programare nouă — AMC*\n\n` +
-    `👤 Client: ${b.name}\n` +
-    `📞 Telefon: ${b.phone}\n` +
-    `✂️ Serviciu: ${b.service}\n` +
-    `👨‍🔧 Frizer: ${b.specialist}\n` +
-    `📅 Data: ${b.dateLabel}\n` +
-    `🕐 Ora: ${b.time}`
-  );
-}
-
-// Deschide WhatsApp pe telefonul clientului cu mesajul gata scris către frizerul ales
-function sendBookingToWhatsApp(booking) {
-  const number = BARBER_WHATSAPP[booking.specialist];
-  if (!number) return;
-  const url = `https://wa.me/${number}?text=${encodeURIComponent(buildWhatsAppMessage(booking))}`;
-  window.open(url, "_blank");
-}
+const MERO_URL = "https://mero.ro/p/am-barber";
 
 // ---------- Utilitare ----------
 const $ = (sel) => document.querySelector(sel);
@@ -150,13 +123,13 @@ function renderServices() {
   const grid = $("#servicesGrid");
   const cards = SERVICES.map(
     (s, i) => `
-    <article class="service-card reveal" style="transition-delay:${i * 80}ms">
+    <article class="service-card reveal" data-service-index="${i}" style="transition-delay:${i * 80}ms">
       <div class="service-top">
         <h3 class="service-name">${s.name}</h3>
         <span class="service-price">${s.price}</span>
       </div>
       <span class="service-meta">⏱ ${s.duration}</span>
-      <a href="#programare" class="btn btn-outline" data-book-service="${s.name}" data-service-index="${i}">Programează →</a>
+      <a href="${MERO_URL}" target="_blank" rel="noopener" class="btn btn-outline">Programează →</a>
     </article>`
   );
   // cardul de redirectionare către Specialiști
@@ -181,7 +154,7 @@ function renderTeam() {
       <h3>${escapeHtml(t.name)}</h3>
       <p class="team-role">${t.role}</p>
       <p class="team-score"><span class="stars">${stars(5)}</span> ${t.rating} <span class="muted">(${t.reviews} evaluări)</span></p>
-      <a href="#programare" class="btn btn-gold" data-book-specialist="${t.name}">Alege</a>
+      <a href="${MERO_URL}" target="_blank" rel="noopener" class="btn btn-gold">Alege</a>
     </article>`
   ).join("");
 }
@@ -313,166 +286,13 @@ function openLightbox(src) {
 
 $("#lightbox")?.addEventListener("click", () => $("#lightbox").classList.remove("open"));
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") $("#lightbox")?.classList.remove("open");
+  if (e.key === "Escape") {
+    $("#lightbox")?.classList.remove("open");
+    closeServicePopup();
+  }
 });
 
-// ---------- Programări ----------
-function getBookings() {
-  try { return JSON.parse(localStorage.getItem("lm_bookings") || "[]"); } catch { return []; }
-}
-function saveBookings(list) {
-  localStorage.setItem("lm_bookings", JSON.stringify(list));
-}
-
-// Șterge automat programările ale căror dată + oră au trecut (se rulează la deschiderea paginii).
-function prunePastBookings() {
-  const bookings = getBookings();
-  const now = new Date();
-  const kept = bookings.filter((b) => {
-    const end = new Date(`${b.date}T${b.time || "00:00"}:00`);
-    return !Number.isNaN(end.getTime()) && end > now;
-  });
-  if (kept.length !== bookings.length) saveBookings(kept);
-  return kept;
-}
-
-function renderBookings() {
-  const bookings = getBookings();
-  const box = $("#myBookings");
-  if (!bookings.length) { box.hidden = true; return; }
-  box.hidden = false;
-  $("#bookingsList").innerHTML = bookings
-    .map(
-      (b, i) => `
-      <div class="booking-item">
-        <div>
-          <strong>${escapeHtml(b.service)}</strong> · ${escapeHtml(b.specialist)}
-          <div class="muted small">${escapeHtml(b.dateLabel)} ora ${escapeHtml(b.time)} · ${escapeHtml(b.name)}</div>
-        </div>
-        <button class="booking-cancel" data-cancel="${i}">Anulează</button>
-      </div>`
-    )
-    .join("");
-}
-
-$("#bookingsList")?.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-cancel]");
-  if (!btn) return;
-  const bookings = getBookings();
-  bookings.splice(Number(btn.dataset.cancel), 1);
-  saveBookings(bookings);
-  renderBookings();
-  populateTimes(); // ora anulată devine din nou disponibilă în formular
-});
-
-// populează selecturile
-function populateBookingSelects() {
-  const serviceSel = $("#bkService");
-  SERVICES.forEach((s) => {
-    const opt = document.createElement("option");
-    opt.value = s.name;
-    opt.textContent = `${s.name} — ${s.duration}, ${s.price}`;
-    serviceSel.appendChild(opt);
-  });
-  const specSel = $("#bkSpecialist");
-  TEAM.forEach((t) => {
-    const opt = document.createElement("option");
-    opt.value = t.name;
-    opt.textContent = `${t.name} (${t.role})`;
-    specSel.appendChild(opt);
-  });
-}
-
-// ore disponibile (sloturi de 30 min în intervalele de program)
-function populateTimes() {
-  const timeSel = $("#bkTime");
-  timeSel.innerHTML = '<option value="">— alege ora —</option>';
-  const dateVal = $("#bkDate").value;
-  if (!dateVal) return;
-  const d = new Date(dateVal + "T00:00:00");
-  const entry = SCHEDULE.find((x) => x.jsDay === d.getDay());
-  if (!entry || entry.closed) {
-    const opt = document.createElement("option");
-    opt.textContent = "Închis în această zi";
-    timeSel.appendChild(opt);
-    return;
-  }
-  const h = parseHours(entry.hours);
-  // orele deja rezervate la SPECIALISTUL ales în data respectivă nu mai apar ca opțiuni
-  const specialist = $("#bkSpecialist").value;
-  const taken = new Set(
-    getBookings()
-      .filter((b) => b.date === dateVal && b.specialist === specialist)
-      .map((b) => b.time)
-  );
-  for (let t = h.open; t + 30 <= h.close; t += 30) {
-    const label = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
-    const opt = document.createElement("option");
-    opt.value = label;
-    opt.textContent = label;
-    timeSel.appendChild(opt);
-  }
-}
-
-function initDateInput() {
-  const dateInput = $("#bkDate");
-  const today = new Date().toISOString().split("T")[0];
-  dateInput.min = today;
-  dateInput.value = today;
-  populateTimes();
-}
-
-$("#bkDate")?.addEventListener("change", populateTimes);
-$("#bkSpecialist")?.addEventListener("change", populateTimes);
-
-$("#bookingForm")?.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const msg = $("#bookingMsg");
-  const name = $("#bkName").value.trim();
-  const phone = $("#bkPhone").value.trim();
-  const service = $("#bkService").value;
-  const specialist = $("#bkSpecialist").value;
-  const date = $("#bkDate").value;
-  const time = $("#bkTime").value;
-
-  if (!name || !phone || !service || !specialist || !date || !time) {
-    msg.textContent = "Te rugăm să completezi toate câmpurile.";
-    msg.className = "form-msg err";
-    return;
-  }
-  if (!/^0[0-9]{9}$/.test(phone.replace(/\s/g, ""))) {
-    msg.textContent = "Număr de telefon invalid (ex: 0722123456).";
-    msg.className = "form-msg err";
-    return;
-  }
-
-  const bookings = getBookings();
-  const duplicate = bookings.some((b) => b.date === date && b.time === time && b.specialist === specialist);
-  if (duplicate) {
-    msg.textContent = "Există deja o programare la această oră cu acest specialist. Alege altă oră.";
-    msg.className = "form-msg err";
-    return;
-  }
-
-  const dateLabel = new Date(date + "T00:00:00").toLocaleDateString("ro-RO", {
-    weekday: "long", day: "numeric", month: "long",
-  });
-  const booking = { name, phone, service, specialist, date, dateLabel, time, createdAt: new Date().toISOString() };
-  bookings.push(booking);
-  saveBookings(bookings);
-  renderBookings();
-
-  // trimitem programarea pe WhatsApp-ul frizerului ales
-  sendBookingToWhatsApp(booking);
-
-  msg.textContent = `✅ Programare salvată: ${service} cu ${specialist}, ${dateLabel} ora ${time}. Se deschide WhatsApp pentru a trimite programarea către ${specialist} — apasă Send!`;
-  msg.className = "form-msg ok";
-  e.target.reset();
-  initDateInput();
-});
-
-// butoanele „Programează” / „Alege” precompleta formularul
-// + popup cu descrierea serviciului în dreapta ecranului
+// Popup cu descrierea serviciului + CTA către Mero
 function ensureServicePopup() {
   let popup = $("#servicePopup");
   if (!popup) {
@@ -483,7 +303,8 @@ function ensureServicePopup() {
       <button class="service-popup-close" aria-label="Închide">✕</button>
       <h3 class="service-popup-name"></h3>
       <p class="service-popup-meta"></p>
-      <p class="service-popup-desc"></p>`;
+      <p class="service-popup-desc"></p>
+      <a href="${MERO_URL}" target="_blank" rel="noopener" class="btn btn-gold">Programează pe Mero →</a>`;
     document.body.appendChild(popup);
     popup.querySelector(".service-popup-close").addEventListener("click", () => closeServicePopup());
   }
@@ -505,15 +326,13 @@ function closeServicePopup() {
 }
 
 document.addEventListener("click", (e) => {
-  const svc = e.target.closest("[data-book-service]");
-  const spec = e.target.closest("[data-book-specialist]");
-  if (svc) {
-    $("#bkService").value = svc.dataset.bookService;
-    openServicePopup(Number(svc.dataset.serviceIndex));
+  if (e.target.closest("#servicePopup")) return;
+  const card = e.target.closest(".service-card[data-service-index]");
+  if (card && !e.target.closest("a")) {
+    openServicePopup(Number(card.dataset.serviceIndex));
+    return;
   }
-  if (spec) $("#bkSpecialist").value = spec.dataset.bookSpecialist;
-  // închide popup-ul la click în afară
-  if (!svc && !e.target.closest("#servicePopup")) closeServicePopup();
+  closeServicePopup();
 });
 
 // ---------- Harta (consimțământ „two-click”) ----------
@@ -565,14 +384,10 @@ function observeReveals() {
 }
 
 // ---------- Init ----------
-renderServices();
-renderTeam();
-renderReviews();
-renderSchedule();
-populateBookingSelects();
-initDateInput();
-prunePastBookings();
-renderBookings();
-renderGallery();
+if ($("#servicesGrid")) renderServices();
+if ($("#teamGrid")) renderTeam();
+if ($("#reviewsGrid")) renderReviews();
+if ($("#scheduleList")) renderSchedule();
+if ($("#galleryGrid")) renderGallery();
 observeReveals();
-setInterval(renderSchedule, 60 * 1000);
+if ($("#scheduleList")) setInterval(renderSchedule, 60 * 1000);
