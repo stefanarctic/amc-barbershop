@@ -229,8 +229,8 @@ function buildGalleryDesktop(grid) {
     const figure = document.createElement("figure");
     figure.className = "gallery-item reveal";
     figure.innerHTML = `
-      <img src="${src}" alt="Client AMC ${i + 1}" loading="lazy" />
-      <figcaption>💇 Tuns de la AMC</figcaption>`;
+      <img src="${src}" alt="Client La Macrea ${i + 1}" loading="lazy" />
+      <figcaption>💇 Tuns de la La Macrea</figcaption>`;
     figure.addEventListener("click", () => openLightbox(i));
     grid.appendChild(figure);
   });
@@ -271,7 +271,7 @@ function layoutGalleryDeck() {
     figure.style.setProperty("--tilt", GALLERY_TILT[pos % GALLERY_TILT.length] + "deg");
     figure.style.setProperty("--off-x", pos * 7 + "px");
     figure.style.setProperty("--off-y", pos * -6 + "px");
-    figure.innerHTML = `<img src="${GALLERY_PHOTOS[photoIdx]}" alt="Client AMC ${photoIdx + 1}" loading="lazy" />`;
+    figure.innerHTML = `<img src="${GALLERY_PHOTOS[photoIdx]}" alt="Client La Macrea ${photoIdx + 1}" loading="lazy" />`;
     if (pos === 0) figure.addEventListener("click", () => openLightbox(galleryDeck[0]));
     deck.appendChild(figure);
   });
@@ -398,7 +398,7 @@ function initMeroEmbed() {
 $("#loadMapBtn")?.addEventListener("click", () => {
   const container = $("#mapConsent");
   const iframe = document.createElement("iframe");
-  iframe.title = "Hartă AMC";
+  iframe.title = "Hartă La Macrea";
   iframe.allowFullscreen = true;
   iframe.src = "https://www.google.com/maps?q=Strada%20Electricenilor%2020%2C%20Sibiu&output=embed";
   container.innerHTML = "";
