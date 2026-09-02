@@ -127,35 +127,49 @@
     </div>
   </section>
 
-  <!-- ===== PROGRAMARE (Mero embed) ===== -->
+  <!-- ===== PROGRAMARE ===== -->
   <section class="section section-booking" id="programare">
     <div class="container">
       <p class="section-kicker reveal">Rezervă-ți locul</p>
-      <h2 class="section-title reveal">Programează-te <span class="gold">acum</span></h2>
-      <p class="section-sub reveal">Alege serviciul, specialistul și ora — rămâi pe pagină, confirmarea e instant.</p>
+      <h2 class="section-title reveal">Sistem de <span class="gold">programări</span></h2>
+      <p class="section-sub reveal">Completează formularul și te contactăm pentru confirmare. Programările tale salvate apar mai jos.</p>
 
-      <div class="mero-embed" id="meroEmbed">
-        <div class="mero-placeholder" id="meroPlaceholder">
-          <div class="mero-spinner" aria-hidden="true"></div>
-          <p>Se încarcă programările…</p>
+      <form class="booking-form reveal" id="bookingForm">
+        <div class="form-grid">
+          <label>Nume complet
+            <input type="text" id="bkName" placeholder="Ex: Andrei Popescu" required />
+          </label>
+          <label>Telefon
+            <input type="tel" id="bkPhone" placeholder="07xx xxx xxx" required />
+          </label>
+          <label>Serviciu
+            <select id="bkService" required>
+              <option value="">— alege —</option>
+            </select>
+          </label>
+          <label>Specialist
+            <select id="bkSpecialist" required>
+              <option value="">— alege —</option>
+            </select>
+          </label>
+          <label>Data
+            <input type="date" id="bkDate" required />
+          </label>
+          <label>Ora
+            <select id="bkTime" required>
+              <option value="">— alege ora —</option>
+            </select>
+          </label>
         </div>
-        <iframe
-          id="meroFrame"
-          title="Programare online Mero — Frizeria AMC"
-          src="https://mero.ro/p/am-barber"
-          loading="lazy"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allow="payment; fullscreen"
-          allowfullscreen
-        ></iframe>
+        <button type="submit" class="btn btn-gold btn-lg">Confirmă programarea</button>
+        <p class="form-msg" id="bookingMsg"></p>
+        <p class="privacy-note">Prin trimitere, datele tale (nume, telefon) sunt salvate doar în browserul tău și trimise prin WhatsApp frizerului ales, pentru confirmarea programării. Vezi <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.</p>
+      </form>
+
+      <div class="my-bookings reveal" id="myBookings" hidden>
+        <h3>Programările tale</h3>
+        <div id="bookingsList"></div>
       </div>
-      <p class="privacy-note mero-embed-note">
-        Programările rulează pe
-        <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener">Mero</a>.
-        Dacă widget-ul nu apare,
-        <a href="https://mero.ro/p/am-barber" target="_blank" rel="noopener">deschide Mero într-un tab nou</a>.
-        Vezi și <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.
-      </p>
     </div>
   </section>
 
@@ -165,8 +179,7 @@
       <p class="section-kicker reveal">Galerie</p>
       <h2 class="section-title reveal">Clienții noștri, <span class="gold">fresh</span></h2>
       <p class="section-sub reveal">Rezultate reale, direct din scaunul frizeriei. Tag-uiește-ne pe social media să aparții și tu aici!</p>
-      <div class="gallery-grid" id="galleryGrid"><!-- desktop: grilă --></div>
-      <div class="gallery-mobile" id="galleryMobile"><!-- mobil: pachet de cărți --></div>
+      <div class="gallery-grid" id="galleryGrid"><!-- generat din JS --></div>
     </div>
   </section>
 
@@ -207,8 +220,8 @@
         <img src="assets/logo.png" alt="AMC Barber Shop" class="footer-logo-img">
       </div>
       <p>Electricenilor nr. 20, Sibiu · Frizerie &amp; Barber Shop</p>
-      <p class="muted small legal-ids"><!-- COMPLETEAZĂ cu datele reale ale firmei -->
-        Frizeria „AMC” · CUI: RO__________ · Nr. înregistrare ONRC: J32/____/______<br>
+      <p class="muted small legal-ids"><!-- COMPLETEAZĂ cu datele reale ale firmei (CUI si ONRC completate) -->
+        Frizeria „AMC” · CUI: 46306564 · Nr. înregistrare ONRC: J32/____/______<br>
         Sediul: Str. Electricenilor nr. 20, Sibiu · Tel: 07________ · E-mail: ______@____.com
       </p>
       <p class="muted small">© 2026 Frizeria „AMC”. Toate drepturile rezervate.</p>
