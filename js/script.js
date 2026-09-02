@@ -1,44 +1,6 @@
 /* ====== Frizeria „AMC” — script.js ====== */
 
 // ---------- Date ----------
-const SERVICES = [
-  {
-    name: "Tuns modern + Aranjat + Spălat",
-    duration: "45 min",
-    price: "60 - 70 lei",
-    desc: "Este atât de simplu să fii fresh — comunică cu frizerul tău și povestește-i ce ți-ar plăcea să încerci.",
-  },
-  {
-    name: "Tuns modern + Barbă + Aranjat + Spălat",
-    duration: "1 h",
-    price: "80 - 90 lei",
-    desc: "Pachetul preferat al domnilor care acordă o atenție exclusivă bărbii, în concordanță cu tunsoarea bine finalizată!",
-  },
-  {
-    name: "Barbă",
-    duration: "30 min",
-    price: "30 - 35 lei",
-    desc: "Barba este elementul cheie al bărbatului îngrijit. Oferă-i atenția necesară prin scurtare și definirea clară a conturului.",
-  },
-  {
-    name: "Pachet Tuns modern + Hairdesign",
-    duration: "50 min",
-    price: "70 - 80 lei",
-    desc: "Pentru cei care vor ceva în plus: tunsoare modernă combinată cu design personalizat.",
-  },
-  {
-    name: "Spălat + Aranjat freză bărbați",
-    duration: "10 min",
-    price: "25 lei",
-    desc: "Refresh rapid între tunsori — spălare și aranjare profesionistă.",
-  },
-];
-
-const TEAM = [
-  { name: "Alex Macrea", role: "Specialist", rating: "5.00", reviews: 971, initials: "AM", image: "assets/alex.jpg" },
-  { name: "Alexandru (Atomic) Văduva", role: "Frizer", rating: "4.97", reviews: 79, initials: "AV", image: "assets/atomic.jpg" },
-];
-
 const REVIEWS = [
   { name: "Mihai C.", initials: "MC", stars: 5, text: "Apelați cu încredere la Alex, tunde exact cum vă doriți 🫡" },
   { name: "Patrick S.", initials: "PS", stars: 5, text: "Servicii de calitate, cu oameni care de fiecare dată te fac să te simți bine. Cât despre tuns — excelent! Recomand!" },
@@ -116,47 +78,6 @@ function openStatusNow() {
   const mins = now.getHours() * 60 + now.getMinutes();
   if (mins >= h.open && mins < h.close) return { open: true, text: "Deschis acum" };
   return { open: false, text: "Închis" };
-}
-
-// ---------- Servicii ----------
-function renderServices() {
-  const grid = $("#servicesGrid");
-  const cards = SERVICES.map(
-    (s, i) => `
-    <article class="service-card reveal" data-service-index="${i}" style="transition-delay:${i * 80}ms">
-      <div class="service-top">
-        <h3 class="service-name">${s.name}</h3>
-        <span class="service-price">${s.price}</span>
-      </div>
-      <span class="service-meta">⏱ ${s.duration}</span>
-      <a href="#programare" class="btn btn-outline">Programează →</a>
-    </article>`
-  );
-  // cardul de redirectionare către Specialiști
-  cards.push(`
-    <a href="#specialisti" class="service-card service-card-link reveal" style="transition-delay:${SERVICES.length * 80}ms">
-      <div class="service-top">
-        <h3 class="service-name">Nu știi pe cine să alegi?</h3>
-        <span class="service-price">✂︎</span>
-      </div>
-      <span class="service-meta">Echipa noastră de frizeri</span>
-      <span class="btn btn-gold">Vezi specialiștii →</span>
-    </a>`);
-  grid.innerHTML = cards.join("");
-}
-
-// ---------- Echipa ----------
-function renderTeam() {
-  $("#teamGrid").innerHTML = TEAM.map(
-    (t, i) => `
-    <article class="team-card reveal" style="transition-delay:${i * 100}ms">
-      <div class="avatar">${t.image ? `<img src="${escapeHtml(t.image)}" alt="${escapeHtml(t.name)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" />` : escapeHtml(t.initials)}</div>
-      <h3>${escapeHtml(t.name)}</h3>
-      <p class="team-role">${t.role}</p>
-      <p class="team-score"><span class="stars">${stars(5)}</span> ${t.rating} <span class="muted">(${t.reviews} evaluări)</span></p>
-      <a href="#programare" class="btn btn-gold">Alege</a>
-    </article>`
-  ).join("");
 }
 
 // ---------- Recenzii ----------
@@ -441,57 +362,13 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") lb.classList.remove("open");
     if (e.key === "ArrowLeft") openLightbox(GALLERY_LIGHTBOX.index - 1);
     if (e.key === "ArrowRight") openLightbox(GALLERY_LIGHTBOX.index + 1);
-    return;
   }
-  if (e.key === "Escape") closeServicePopup();
 });
-
-// Popup cu descrierea serviciului + CTA către Mero
-function ensureServicePopup() {
-  let popup = $("#servicePopup");
-  if (!popup) {
-    popup = document.createElement("div");
-    popup.id = "servicePopup";
-    popup.className = "service-popup";
-    popup.innerHTML = `
-      <button class="service-popup-close" aria-label="Închide">✕</button>
-      <h3 class="service-popup-name"></h3>
-      <p class="service-popup-meta"></p>
-      <p class="service-popup-desc"></p>
-      <a href="#programare" class="btn btn-gold">Programează-te →</a>`;
-    document.body.appendChild(popup);
-    popup.querySelector(".service-popup-close").addEventListener("click", () => closeServicePopup());
-  }
-  return popup;
-}
-
-function openServicePopup(index) {
-  const s = SERVICES[index];
-  if (!s) return;
-  const popup = ensureServicePopup();
-  popup.querySelector(".service-popup-name").textContent = s.name;
-  popup.querySelector(".service-popup-meta").textContent = `⏱ ${s.duration} · ${s.price}`;
-  popup.querySelector(".service-popup-desc").textContent = s.desc;
-  popup.classList.add("open");
-}
-
-function closeServicePopup() {
-  $("#servicePopup")?.classList.remove("open");
-}
 
 document.addEventListener("click", (e) => {
   if (e.target.closest('a[href="#programare"], a[href="index.html#programare"]')) {
     warmMeroFrame();
-    closeServicePopup();
-    return;
   }
-  if (e.target.closest("#servicePopup")) return;
-  const card = e.target.closest(".service-card[data-service-index]");
-  if (card && !e.target.closest("a")) {
-    openServicePopup(Number(card.dataset.serviceIndex));
-    return;
-  }
-  closeServicePopup();
 });
 
 // ---------- Embed Mero ----------
@@ -564,8 +441,6 @@ function observeReveals() {
 }
 
 // ---------- Init ----------
-if ($("#servicesGrid")) renderServices();
-if ($("#teamGrid")) renderTeam();
 if ($("#reviewsGrid")) renderReviews();
 if ($("#scheduleList")) renderSchedule();
 if ($("#galleryGrid")) renderGallery();
