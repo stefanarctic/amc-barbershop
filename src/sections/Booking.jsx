@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { SERVICES, TEAM, SLOT_MIN } from "../data/content.js";
-import { cancelBooking, createBooking, fetchTakenSlots, serviceDuration } from "../lib/bookings.js";
+import { cancelBooking, createBooking, serviceDuration, subscribeTakenSlots } from "../lib/bookings.js";
 import { isFirebaseConfigured } from "../firebase.js";
 import {
   addMyPhone,
@@ -20,6 +20,7 @@ import {
   localToday,
   parseHours,
   scheduleForDate,
+  startConflictsTaken,
 } from "../lib/utils.js";
 
 export function Booking({ service, specialist, onServiceChange, onSpecialistChange }) {
@@ -35,9 +36,12 @@ export function Booking({ service, specialist, onServiceChange, onSpecialistChan
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      setTime("");
-      setTimesNote("");
+    let unsub = () => {};
+    setTime("");
+    setTimesNote("");
+
+    function paint(taken, serverOk) {
+      if (cancelled) return;
       const entry = scheduleForDate(date);
       if (!date) {
         setTimes([]);
@@ -50,31 +54,47 @@ export function Booking({ service, specialist, onServiceChange, onSpecialistChan
       }
       const h = parseHours(entry.hours);
       const dur = serviceDuration(service);
-      let taken = new Set();
-      let serverOk = true;
-      if (specialist && isFirebaseConfigured()) {
-        try {
-          taken = await fetchTakenSlots(date, specialist);
-        } catch {
-          serverOk = false;
-        }
-      }
-      if (cancelled) return;
       const isToday = date === localToday();
       const nowMin = localNowMinutes();
-      const free = [];
+      const list = [];
       for (let t = h.open; t + dur <= h.close; t += SLOT_MIN) {
-        const label = fromMinutes(t);
-        if (taken.has(label)) continue;
         if (isToday && t <= nowMin) continue;
-        free.push(label);
+        const value = fromMinutes(t);
+        list.push({ value, taken: startConflictsTaken(value, dur, taken) });
       }
-      setTimes(free);
-      if (!free.length) setTimesNote(isToday ? "Nu mai sunt ore astăzi" : "Nicio oră liberă în această zi");
+      setTimes(list);
+      const free = list.filter((slot) => !slot.taken);
+      if (!list.length) setTimesNote(isToday ? "Nu mai sunt ore astăzi" : "Nicio oră liberă în această zi");
+      else if (!free.length) setTimesNote("Toate orele sunt ocupate în această zi");
       else if (!serverOk) setTimesNote("⚠ Nu am putut verifica orele ocupate");
+      else setTimesNote("");
+      setTime((current) => {
+        if (!current) return current;
+        const slot = list.find((item) => item.value === current);
+        return !slot || slot.taken ? "" : current;
+      });
     }
-    load();
-    return () => { cancelled = true; };
+
+    const entry = scheduleForDate(date);
+    if (!date || !entry || entry.closed) {
+      paint(new Set(), true);
+      return () => { cancelled = true; };
+    }
+
+    if (specialist && isFirebaseConfigured()) {
+      try {
+        unsub = subscribeTakenSlots(date, specialist, paint);
+      } catch {
+        paint(new Set(), false);
+      }
+    } else {
+      paint(new Set(), true);
+    }
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, [date, specialist, service]);
 
   const onSubmit = async (e) => {
@@ -83,6 +103,10 @@ export function Booking({ service, specialist, onServiceChange, onSpecialistChan
     const payload = { name, phone, service, specialist, date, time };
     if (!payload.name || !payload.phone || !payload.service || !payload.specialist || !payload.date || !payload.time) {
       setMsg({ text: "Te rugăm să completezi toate câmpurile.", kind: "err" });
+      return;
+    }
+    if (times.find((slot) => slot.value === payload.time)?.taken) {
+      setMsg({ text: "Ora este deja ocupată. Alege alt interval.", kind: "err" });
       return;
     }
     setBusy(true);
@@ -167,7 +191,11 @@ export function Booking({ service, specialist, onServiceChange, onSpecialistChan
             <label>Ora
               <select required value={time} onChange={(e) => setTime(e.target.value)}>
                 <option value="">— alege ora —</option>
-                {times.map((t) => <option key={t} value={t}>{t}</option>)}
+                {times.map((slot) => (
+                  <option key={slot.value} value={slot.value} disabled={slot.taken}>
+                    {slot.taken ? `${slot.value} — ocupat` : slot.value}
+                  </option>
+                ))}
                 {timesNote && <option disabled value="">{timesNote}</option>}
               </select>
             </label>

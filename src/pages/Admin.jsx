@@ -24,6 +24,7 @@ export function Admin() {
   const [barber, setBarber] = useState("");
   const [when, setWhen] = useState("upcoming");
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     document.body.classList.add("admin-page");
@@ -49,10 +50,17 @@ export function Admin() {
 
   const load = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       setBookings(await fetchAdminBookings());
-    } catch {
+    } catch (err) {
       setBookings([]);
+      const denied = /permission|insufficient/i.test(err?.code || err?.message || "");
+      setLoadError(
+        denied
+          ? "Firebase a blocat citirea programărilor. Publică firestore.rules actualizat, apoi reîncarcă pagina."
+          : (err?.message || "Nu am putut încărca programările."),
+      );
     } finally {
       setLoading(false);
     }
@@ -162,9 +170,10 @@ export function Admin() {
             </div>
           </div>
           <p className="muted dash-note">
-            Programările sosesc live din Firebase. Sincronizează-le în Google Calendar cu butoanele de mai jos.
+            Programările sosesc live din Firebase. Cele mai vechi de o zi se șterg automat la deschiderea dashboard-ului.
             {loading ? " Se actualizează…" : ""}
           </p>
+          {loadError && <p className="form-msg err">{loadError}</p>}
           <div className="admin-list">
             {filtered.map((b) => (
               <div className="admin-item" key={b.id}>
@@ -183,7 +192,12 @@ export function Admin() {
               </div>
             ))}
           </div>
-          {filtered.length === 0 && <p className="muted">Nicio programare aici.</p>}
+          {filtered.length === 0 && !loadError && bookings.length > 0 && (
+            <p className="muted">Ai programări, dar nu în filtrul curent. Alege „Toate”.</p>
+          )}
+          {filtered.length === 0 && !loadError && bookings.length === 0 && (
+            <p className="muted">Nicio programare aici.</p>
+          )}
         </section>
       </main>
     </>

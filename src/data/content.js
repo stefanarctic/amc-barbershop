@@ -69,7 +69,7 @@ export const SCHEDULE = [
 
 export const SLOT_MIN = 30;
 export const DEFAULT_DURATION = 30;
-export const MAX_FUTURE_BOOKINGS = 2;
+export const MAX_FUTURE_BOOKINGS = 1;
 export const ADDRESS_QUERY = "Strada Electricenilor 20, Sibiu";
 export const PHONE_RE = /^0[0-9]{9}$/;
 export const GALLERY_PHOTOS = [

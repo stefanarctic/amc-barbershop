@@ -26,6 +26,10 @@ export function localToday() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+export function isBookingExpired(dateStr, today = localToday()) {
+  return typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && dateStr < today;
+}
+
 export function localNowMinutes() {
   const d = new Date();
   return d.getHours() * 60 + d.getMinutes();
@@ -102,6 +106,10 @@ export function occupiedTimes(startTime, durationMin, slotMin = 30) {
     times.push(fromMinutes(t));
   }
   return times;
+}
+
+export function startConflictsTaken(startTime, durationMin, taken, slotMin = 30) {
+  return occupiedTimes(startTime, durationMin, slotMin).some((t) => taken.has(t));
 }
 
 export function randomToken() {

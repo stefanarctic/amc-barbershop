@@ -29,7 +29,7 @@ rules_version = '2';
 // Collection: phones
 // Document ID: phone number
 // Fields:
-//   - phone: string, futureIds: list<=2 of booking UUIDs, updatedAt: timestamp
+//   - phone: string, futureIds: list<=1 of booking UUIDs, updatedAt: timestamp
 // Access: get if you know the phone; no list; create/update with size limits
 //
 // Collection: cancelAttempts
@@ -95,8 +95,8 @@ service cloud.firestore {
       return timeStr is string && timeStr.matches('^([01][0-9]|2[0-3]):[03]0$');
     }
 
-    function isValidService(service) {
-      return service in [
+    function isValidService(serviceName) {
+      return serviceName in [
         'Tuns modern + Aranjat + Spălat',
         'Tuns modern + Barbă + Aranjat + Spălat',
         'Barbă',
@@ -105,12 +105,12 @@ service cloud.firestore {
       ];
     }
 
-    function durationForService(service) {
-      return service == 'Tuns modern + Aranjat + Spălat' ? 45
-        : service == 'Tuns modern + Barbă + Aranjat + Spălat' ? 60
-        : service == 'Barbă' ? 30
-        : service == 'Pachet Tuns modern + Hairdesign' ? 50
-        : service == 'Spălat + Aranjat freză bărbați' ? 10
+    function durationForService(serviceName) {
+      return serviceName == 'Tuns modern + Aranjat + Spălat' ? 45
+        : serviceName == 'Tuns modern + Barbă + Aranjat + Spălat' ? 60
+        : serviceName == 'Barbă' ? 30
+        : serviceName == 'Pachet Tuns modern + Hairdesign' ? 50
+        : serviceName == 'Spălat + Aranjat freză bărbați' ? 10
         : 0;
     }
 
@@ -141,15 +141,15 @@ service cloud.firestore {
         && data.keys().hasAll(bookingFields())
         && data.name is string && data.name.size() >= 2 && data.name.size() <= 80
         && isValidPhone(data.phone)
-        && isValidService(data.service)
+        && isValidService(data['service'])
         && isValidSpecialist(data.specialist)
         && isValidDate(data.date)
         && isValidTime(data.time)
-        && data.duration is int
-        && data.duration == durationForService(data.service)
+        && data['duration'] is int
+        && data['duration'] == durationForService(data['service'])
         && data.startMin is int
         && data.startMin >= 0
-        && data.startMin <= 24 * 60 - data.duration
+        && data.startMin <= 24 * 60 - data['duration']
         && data.startsAt is string
         && data.startsAt == data.date + 'T' + data.time
         && isValidCancelToken(data.cancelToken)
@@ -162,8 +162,8 @@ service cloud.firestore {
         && isValidDate(data.date)
         && isValidSpecialist(data.specialist)
         && isValidTime(data.time)
-        && data.duration is int
-        && data.duration in [10, 30, 45, 50, 60]
+        && data['duration'] is int
+        && data['duration'] in [10, 30, 45, 50, 60]
         && data.startMin is int
         && data.startMin >= 0
         && data.startMin < 24 * 60
@@ -174,12 +174,10 @@ service cloud.firestore {
       return data.keys().hasOnly(['phone', 'futureIds', 'updatedAt'])
         && isValidPhone(data.phone)
         && data.futureIds is list
-        && data.futureIds.size() <= 2
+        && data.futureIds.size() <= 1
         && data.updatedAt is timestamp
         && (data.futureIds.size() == 0
-          || (data.futureIds[0] is string && data.futureIds[0].size() <= 64))
-        && (data.futureIds.size() < 2
-          || (data.futureIds[1] is string && data.futureIds[1].size() <= 64));
+          || (data.futureIds[0] is string && data.futureIds[0].size() <= 64));
     }
 
     function isValidCancelAttempt(data) {
@@ -196,7 +194,7 @@ service cloud.firestore {
     }
 
     match /bookings/{bookingId} {
-      allow read: if isAdmin();
+      allow read: if isAuthenticated();
       allow create: if isValidBooking(request.resource.data)
         && request.resource.data.cancelled == false
         && isRecent(request.resource.data.createdAt);
@@ -211,7 +209,7 @@ service cloud.firestore {
           && getAfter(/databases/$(database)/documents/cancelAttempts/$(bookingId)).data.token
             == resource.data.cancelToken
         );
-      allow delete: if isAdmin();
+      allow delete: if isAuthenticated();
     }
 
     match /slots/{slotId} {
@@ -222,15 +220,15 @@ service cloud.firestore {
           == request.resource.data.date
         && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.specialist
           == request.resource.data.specialist
-        && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.duration
-          == request.resource.data.duration
+        && getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data['duration']
+          == request.resource.data['duration']
         && request.resource.data.startMin
           >= getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.startMin
         && request.resource.data.startMin
           < getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.startMin
-            + getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.duration;
+            + getAfter(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data['duration'];
       allow update: if false;
-      allow delete: if isAdmin()
+      allow delete: if isAuthenticated()
         || (
           exists(/databases/$(database)/documents/bookings/$(resource.data.bookingId))
           && get(/databases/$(database)/documents/bookings/$(resource.data.bookingId)).data.cancelled == true
@@ -249,8 +247,8 @@ service cloud.firestore {
         && phoneId == resource.data.phone
         && (
           (
-            request.resource.data.futureIds.size() == resource.data.futureIds.size() + 1
-            && request.resource.data.futureIds.hasAll(resource.data.futureIds)
+            resource.data.futureIds.size() == 0
+            && request.resource.data.futureIds.size() == 1
           )
           || (
             request.resource.data.futureIds.size() == resource.data.futureIds.size() - 1

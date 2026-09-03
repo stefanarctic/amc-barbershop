@@ -2,15 +2,19 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
+  onSnapshot,
   query,
   runTransaction,
   serverTimestamp,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { SERVICES, MAX_FUTURE_BOOKINGS, PHONE_RE, SLOT_MIN } from "../data/content.js";
 import { db, isFirebaseConfigured } from "../firebase.js";
 import {
+  isBookingExpired,
   isPast,
   localToday,
   occupiedTimes,
@@ -61,15 +65,37 @@ export function validateBookingClient(payload) {
   return { booking: { name, phone, service, specialist, date, time }, duration };
 }
 
+function slotTimeFromDoc(d) {
+  const time = d.data().time;
+  if (typeof time === "string" && time) return time;
+  const match = /__(\d{4})$/.exec(d.id);
+  return match ? `${match[1].slice(0, 2)}:${match[1].slice(2)}` : "";
+}
+
+function takenSetFromDocs(docs, specialist) {
+  return new Set(
+    docs
+      .filter((d) => !specialist || d.data().specialist === specialist)
+      .map(slotTimeFromDoc)
+      .filter(Boolean),
+  );
+}
+
 export async function fetchTakenSlots(date, specialist) {
   const firestore = requireDb();
-  const q = query(
-    collection(firestore, "slots"),
-    where("date", "==", date),
-    where("specialist", "==", specialist),
-  );
+  const q = query(collection(firestore, "slots"), where("date", "==", date));
   const snap = await getDocs(q);
-  return new Set(snap.docs.map((d) => d.data().time));
+  return takenSetFromDocs(snap.docs, specialist);
+}
+
+export function subscribeTakenSlots(date, specialist, onChange) {
+  const firestore = requireDb();
+  const q = query(collection(firestore, "slots"), where("date", "==", date));
+  return onSnapshot(
+    q,
+    (snap) => onChange(takenSetFromDocs(snap.docs, specialist), true),
+    () => onChange(new Set(), false),
+  );
 }
 
 export async function createBooking(payload) {
@@ -96,7 +122,7 @@ export async function createBooking(payload) {
     const phoneSnap = await tx.get(phoneRef);
     const futureIds = phoneSnap.exists() ? phoneSnap.data().futureIds || [] : [];
     if (futureIds.length >= MAX_FUTURE_BOOKINGS) {
-      throw new Error("Ai deja 2 programări viitoare. Anulează una sau sună la frizerie.");
+      throw new Error("Ai deja o programare activă pe acest număr. Anuleaz-o sau sună la frizerie.");
     }
 
     tx.set(doc(firestore, "bookings", id), {
@@ -168,7 +194,7 @@ export async function cancelBooking({ id, token, phone, date, specialist, time, 
 export async function fetchAdminBookings() {
   const firestore = requireDb();
   const snap = await getDocs(collection(firestore, "bookings"));
-  return snap.docs.map((d) => {
+  const bookings = snap.docs.map((d) => {
     const data = d.data();
     return {
       id: d.id,
@@ -176,6 +202,51 @@ export async function fetchAdminBookings() {
       createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || "",
     };
   });
+
+  const stale = [];
+  const current = [];
+  for (const booking of bookings) {
+    if (isBookingExpired(booking.date)) stale.push(booking);
+    else current.push(booking);
+  }
+
+  const purged = await Promise.allSettled(stale.map((booking) => adminDeleteBooking(booking)));
+  purged.forEach((result, i) => {
+    if (result.status === "rejected") current.push(stale[i]);
+  });
+
+  try {
+    await syncMissingSlots(current);
+  } catch {
+    /* backfill best-effort — lista de programări rămâne vizibilă */
+  }
+  return current;
+}
+
+async function syncMissingSlots(bookings) {
+  const firestore = requireDb();
+  await Promise.all(
+    bookings
+      .filter((b) => !b.cancelled && b.date && b.specialist && b.time)
+      .map(async (b) => {
+        const times = occupiedTimes(b.time, b.duration || 30, SLOT_MIN);
+        await Promise.all(
+          times.map(async (t) => {
+            const ref = doc(firestore, "slots", slotDocId(b.date, b.specialist, t));
+            const existing = await getDoc(ref);
+            if (existing.exists()) return;
+            await setDoc(ref, {
+              date: b.date,
+              specialist: b.specialist,
+              time: t,
+              startMin: toMinutes(t),
+              duration: b.duration || 30,
+              bookingId: b.id,
+            });
+          }),
+        );
+      }),
+  );
 }
 
 export async function adminDeleteBooking(booking) {
@@ -199,6 +270,7 @@ export async function adminDeleteBooking(booking) {
     });
   }
   await deleteDoc(doc(firestore, "bookings", booking.id));
+  await deleteDoc(doc(firestore, "cancelAttempts", booking.id)).catch(() => {});
 }
 
 export function gcalLink(b) {
