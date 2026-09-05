@@ -1,0 +1,21 @@
+{
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/politica-confidentialitate.html",
+      "destination": "/politica-confidentialitate",
+      "permanent": true
+    },
+    {
+      "source": "/termeni-conditii.html",
+      "destination": "/termeni-conditii",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
