@@ -365,33 +365,6 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-document.addEventListener("click", (e) => {
-  if (e.target.closest('a[href="#programare"], a[href="index.html#programare"]')) {
-    warmMeroFrame();
-  }
-});
-
-// ---------- Embed Mero ----------
-function warmMeroFrame() {
-  const frame = $("#meroFrame");
-  if (!frame || frame.dataset.warmed === "1") return;
-  frame.dataset.warmed = "1";
-  frame.loading = "eager";
-  frame.src = frame.getAttribute("src") || MERO_URL;
-}
-
-function initMeroEmbed() {
-  const frame = $("#meroFrame");
-  const placeholder = $("#meroPlaceholder");
-  if (!frame) return;
-
-  const hidePlaceholder = () => placeholder?.classList.add("hidden");
-  frame.addEventListener("load", hidePlaceholder);
-  setTimeout(hidePlaceholder, 8000);
-
-  if (location.hash === "#programare") warmMeroFrame();
-}
-
 // ---------- Harta (consimțământ „two-click”) ----------
 // Iframe-ul Google Maps NU se încarcă la deschiderea paginii — doar la apăsarea butonului,
 // ca vizitatorul să își dea consimțământul înainte ca Google să primească datele lui.
@@ -444,6 +417,5 @@ function observeReveals() {
 if ($("#reviewsGrid")) renderReviews();
 if ($("#scheduleList")) renderSchedule();
 if ($("#galleryGrid")) renderGallery();
-initMeroEmbed();
 observeReveals();
 if ($("#scheduleList")) setInterval(renderSchedule, 60 * 1000);
