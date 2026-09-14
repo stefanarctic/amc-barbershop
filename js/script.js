@@ -413,9 +413,46 @@ function observeReveals() {
   document.querySelectorAll(".reveal:not(.visible)").forEach((el) => observer.observe(el));
 }
 
+// ---------- Banner cookie-uri ----------
+const COOKIE_KEY = "lm_cookie_choice";
+
+function saveCookieChoice(choice) {
+  try { localStorage.setItem(COOKIE_KEY, choice); } catch { /* privat / blocat */ }
+  $("#cookieBanner")?.remove();
+}
+
+function initCookieBanner() {
+  let saved = null;
+  try { saved = localStorage.getItem(COOKIE_KEY); } catch { saved = null; }
+  if (saved === "all" || saved === "essential") return;
+
+  const banner = document.createElement("div");
+  banner.className = "cookie-banner";
+  banner.id = "cookieBanner";
+  banner.setAttribute("role", "dialog");
+  banner.setAttribute("aria-labelledby", "cookieTitle");
+  banner.setAttribute("aria-describedby", "cookieText");
+  banner.innerHTML =
+    '<div class="cookie-banner-inner">' +
+      '<div>' +
+        '<p class="cookie-banner-title" id="cookieTitle">Cookie-uri și stocare locală</p>' +
+        '<p id="cookieText">Folosim doar stocare locală esențială (preferințe și recenzia ta, dacă o lași). Fără tracking, analytics sau publicitate. Vezi <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.</p>' +
+      '</div>' +
+      '<div class="cookie-banner-actions">' +
+        '<button type="button" class="btn btn-gold" data-cookie="all">Accept</button>' +
+        '<button type="button" class="btn btn-outline" data-cookie="essential">Doar esențiale</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(banner);
+  banner.querySelectorAll("[data-cookie]").forEach((btn) => {
+    btn.addEventListener("click", () => saveCookieChoice(btn.getAttribute("data-cookie")));
+  });
+}
+
 // ---------- Init ----------
 if ($("#reviewsGrid")) renderReviews();
 if ($("#scheduleList")) renderSchedule();
 if ($("#galleryGrid")) renderGallery();
 observeReveals();
+initCookieBanner();
 if ($("#scheduleList")) setInterval(renderSchedule, 60 * 1000);
