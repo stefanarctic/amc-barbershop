@@ -87,15 +87,21 @@ const REVIEWS_MORE = 4;
 let reviewsShown = REVIEWS_INITIAL;
 
 function getAllReviews() {
-  const userReviews = getUserReviews().filter((r) => r.stars >= 4); // public doar 4 stele +
-  return [...REVIEWS, ...EXTRA_REVIEWS, ...getTodayMeroReviews(), ...userReviews];
+  return [...REVIEWS, ...EXTRA_REVIEWS, ...getTodayMeroReviews()];
 }
 
 function renderReviews() {
-  const list = getAllReviews().slice(0, reviewsShown);
-  $("#moreReviewsBtn").hidden = reviewsShown >= getAllReviews().length;
+  const all = getAllReviews();
+  const list = all.slice(0, reviewsShown);
+  const btn = $("#moreReviewsBtn");
+  const expanded = reviewsShown > REVIEWS_INITIAL;
+  if (btn) {
+    btn.hidden = all.length <= REVIEWS_INITIAL;
+    btn.textContent = expanded ? "Arată mai puține recenzii" : "Vezi mai multe recenzii";
+    btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+  }
   $("#reviewsGrid").innerHTML = list.map(
-    (r, i) => `
+    (r) => `
     <article class="review-card reveal visible">
       <div class="review-head">
         <div class="review-avatar">${escapeHtml(r.initials)}</div>
@@ -103,45 +109,21 @@ function renderReviews() {
           <div class="review-name">${escapeHtml(r.name)}${r.source === "mero" ? ' <span class="muted small">· Mero</span>' : ""}</div>
           <div class="stars">${stars(r.stars)}</div>
         </div>
-        ${r.source === "user" ? `<button class="review-delete" data-review-delete="${escapeHtml(r.id)}" aria-label="Șterge recenzia" title="Șterge recenzia ta">🗑</button>` : ""}
       </div>
       <p class="review-text">${escapeHtml(r.text)}</p>
     </article>`
   ).join("");
 }
 
-function getUserReviews() {
-  try { return JSON.parse(localStorage.getItem("lm_reviews") || "[]"); } catch { return []; }
-}
-
-// ștergerea unei recenzii proprii (salvate local în browserul fiecăruia)
-$("#reviewsGrid")?.addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-review-delete]");
-  if (!btn) return;
-  const id = btn.dataset.reviewDelete;
-  const remaining = getUserReviews().filter((r) => String(r.id) !== id);
-  localStorage.setItem("lm_reviews", JSON.stringify(remaining));
-  renderReviews();
-});
-
 $("#moreReviewsBtn")?.addEventListener("click", () => {
-  reviewsShown += REVIEWS_MORE;
-  renderReviews();
-});
-
-$("#reviewForm")?.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = $("#reviewName").value.trim();
-  const text = $("#reviewText").value.trim();
-  const starsN = Number($("#reviewStars").value);
-  if (!name || !text) return;
-  const initials = name.split(/\s+/).map((w) => w[0].toUpperCase()).slice(0, 2).join("");
-  const reviews = getUserReviews();
-  reviews.unshift({ id: Date.now(), name, initials, stars: starsN, text, source: "user" });
-  localStorage.setItem("lm_reviews", JSON.stringify(reviews));
-  reviewsShown = getAllReviews().length; // arată și recenzia nou adăugată
-  renderReviews();
-  e.target.reset();
+  if (reviewsShown > REVIEWS_INITIAL) {
+    reviewsShown = REVIEWS_INITIAL;
+    renderReviews();
+    $("#recenzii")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    reviewsShown = Math.min(reviewsShown + REVIEWS_MORE, getAllReviews().length);
+    renderReviews();
+  }
 });
 
 // ---------- Program ----------
@@ -436,11 +418,10 @@ function initCookieBanner() {
     '<div class="cookie-banner-inner">' +
       '<div>' +
         '<p class="cookie-banner-title" id="cookieTitle">Cookie-uri și stocare locală</p>' +
-        '<p id="cookieText">Folosim doar stocare locală esențială (preferințe și recenzia ta, dacă o lași). Fără tracking, analytics sau publicitate. Vezi <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.</p>' +
+        '<p id="cookieText">Folosim doar stocare locală esențială (ca să nu reafișăm acest mesaj). Fără tracking, analytics sau publicitate. Vezi <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.</p>' +
       '</div>' +
       '<div class="cookie-banner-actions">' +
-        '<button type="button" class="btn btn-gold" data-cookie="all">Accept</button>' +
-        '<button type="button" class="btn btn-outline" data-cookie="essential">Doar esențiale</button>' +
+        '<button type="button" class="btn btn-gold" data-cookie="essential">Am înțeles</button>' +
       '</div>' +
     '</div>';
   document.body.appendChild(banner);

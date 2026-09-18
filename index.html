@@ -84,24 +84,14 @@
       </div>
       <div class="reviews-grid" id="reviewsGrid"><!-- generat din JS --></div>
       <div class="center reveal">
-        <button class="btn btn-outline" id="moreReviewsBtn">Vezi mai multe recenzii</button>
+        <button class="btn btn-outline" id="moreReviewsBtn" aria-expanded="false">Vezi mai multe recenzii</button>
       </div>
-      <div class="add-review-box reveal">
-        <h3>Adaugă o recenzie</h3>
-        <form id="reviewForm">
-          <div class="form-row">
-            <input type="text" id="reviewName" placeholder="Numele tău" required />
-            <select id="reviewStars" required>
-              <option value="5">★★★★★ (5)</option>
-              <option value="4">★★★★ (4)</option>
-              <option value="3">★★★ (3)</option>
-              <option value="2">★★ (2)</option>
-              <option value="1">★ (1)</option>
-            </select>
-          </div>
-          <textarea id="reviewText" rows="3" placeholder="Povestește experiența ta..." required></textarea>
-          <button type="submit" class="btn btn-gold">Trimite recenzia</button>
-        </form>
+      <div class="google-review-cta reveal">
+        <a class="btn btn-gold btn-lg" target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/?api=1&query=Frizeria+La+Macrea,+Strada+Electricenilor+20,+Sibiu">
+          Lasă o recenzie pe Google
+        </a>
+        <p class="privacy-note">Te ducem pe Google, unde poți scrie o recenzie publică. Recenzia nu se salvează pe acest site. Vezi <a href="politica-confidentialitate.html">Politică de confidențialitate</a>.</p>
       </div>
     </div>
   </section>
@@ -169,7 +159,11 @@
       <h2 class="section-title left reveal">Date de <span class="gold">identificare</span></h2>
       <dl class="company-data reveal">
         <div>
-          <dt>Denumire:</dt>
+          <dt>Denumire legală:</dt>
+          <dd>MACREA ALEXANDRU-NICOLAE PFA</dd>
+        </div>
+        <div>
+          <dt>Denumire comercială:</dt>
           <dd>Frizeria „La Macrea”</dd>
         </div>
         <div>
@@ -181,7 +175,7 @@
           <dd>F2022000481324</dd>
         </div>
         <div>
-          <dt>Sediul:</dt>
+          <dt>Punct de lucru:</dt>
           <dd>Strada Electricenilor nr. 20, Sibiu</dd>
         </div>
         <div>
@@ -209,8 +203,8 @@
       </div>
       <p>Electricenilor nr. 20, Sibiu · Frizerie &amp; Barber Shop</p>
       <p class="muted small legal-ids">
-        Frizeria „La Macrea” · CUI: 46306564 · Nr. Reg. Comerț: F2022000481324<br>
-        Sediul: Strada Electricenilor nr. 20, Sibiu · Tel: <a href="tel:+40753817498">0753 817 498</a>
+        MACREA ALEXANDRU-NICOLAE PFA · Frizeria „La Macrea” · CUI: 46306564 · Nr. Reg. Comerț: F2022000481324<br>
+        Punct de lucru: Strada Electricenilor nr. 20, Sibiu · Tel: <a href="tel:+40753817498">0753 817 498</a>
       </p>
       <p class="muted small">© 2026 Frizeria „La Macrea”. Toate drepturile rezervate.</p>
       <p class="muted small footer-links">
